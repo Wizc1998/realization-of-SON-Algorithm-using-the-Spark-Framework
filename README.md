@@ -1,5 +1,5 @@
 # realization-of-SON-Algorithm-using-the-Spark-Framework
-SON algorithm is an algorithm that can be help finding similar item.   
+SON algorithm is an algorithm that can be help finding similar item, it is similar to MapReduce functions, but with more complexity.   
 It is wildly used by famous companies such as Amazon, Google, Meta for content recommendation.  
 
   
