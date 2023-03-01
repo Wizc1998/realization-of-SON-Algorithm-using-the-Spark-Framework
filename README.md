@@ -4,8 +4,8 @@ It is wildly used by famous companies such as Amazon, Google, Meta for content r
 
   
 For example, when you see an **Ads that is advertising something related to your personal interests**,  
-or, for example, **Amazon's "similar product based on your purchase" ** 
-it is related to the **SON-like Algorithms** behind the scenes.   
+or, for example, **Amazon's "similar product based on your purchase" **   
+it all thanks to the **SON-like Algorithms** behind the scenes.   
 
  
 In this project, I will implement the SON Algorithm using the Spark Framework. I will develop a program to find frequent itemsets in two datasets, one simulated dataset and one real-world generated dataset. The goal of this assignment is to apply the algorithms I have learned in class on large datasets more efficiently in a distributed environment.  
