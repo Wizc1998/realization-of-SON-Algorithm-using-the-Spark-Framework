@@ -1,0 +1,2 @@
+# realization-of-SON-Algorithm-using-the-Spark-Framework
+In this project, I will implement the SON Algorithm using the Spark Framework. I will develop a program to find frequent itemsets in two datasets, one simulated dataset and one real-world generated dataset. The goal of this assignment is to apply the algorithms I have learned in class on large datasets more efficiently in a distributed environment.
