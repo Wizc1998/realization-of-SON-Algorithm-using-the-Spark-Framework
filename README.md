@@ -1,4 +1,8 @@
 # realization-of-SON-Algorithm-using-the-Spark-Framework
+SON algorithm is an algorithm that can be help finding similar item.   
+It is wildly used by famous companies such as Amazon, Google, Meta for content recommendation.  
+Whenever you see an Ads that is advertising something related to your personal interests, it is related to the SON-like Algorithms behind the scenes.   
+
 In this project, I will implement the SON Algorithm using the Spark Framework. I will develop a program to find frequent itemsets in two datasets, one simulated dataset and one real-world generated dataset. The goal of this assignment is to apply the algorithms I have learned in class on large datasets more efficiently in a distributed environment.  
 
 Here is the Link that explains SON algorithm: http://www.sfu.ca/~cjbrown/pdfs/cmpt741_proj_hadoop.pdf  
