@@ -1,23 +1,62 @@
-# realization-of-SON-Algorithm-using-the-Spark-Framework
-SON algorithm is an algorithm that can be help finding similar item, it is similar to MapReduce functions, but with more complexity.   
-It is wildly used by famous companies such as Amazon, Google, Meta for content recommendation.  
+# Frequent Itemset Mining with SON and PySpark
 
-  
-For example, when you see an **Ads that is advertising something related to your personal interests**,  
-or, for example, **Amazon's "similar product based on your purchase" **   
-it all thanks to the **SON-like Algorithms** behind the scenes.   
+![PySpark](https://img.shields.io/badge/PySpark-distributed%20mining-E25A1C?logo=apachespark&logoColor=white)
+![Algorithm](https://img.shields.io/badge/Algorithm-SON%20%2B%20Apriori-6366f1)
 
- 
-In this project, I will implement the SON Algorithm using the Spark Framework. I will develop a program to find frequent itemsets in two datasets, one simulated dataset and one real-world generated dataset. The goal of this assignment is to apply the algorithms I have learned in class on large datasets more efficiently in a distributed environment.  
+A from-scratch implementation of the two-pass SON algorithm for frequent-itemset mining on distributed transaction baskets. The project combines partition-local Apriori candidate generation with a global support-counting pass in PySpark.
 
-Here is the Link that explains SON algorithm: http://www.sfu.ca/~cjbrown/pdfs/cmpt741_proj_hadoop.pdf  
+## Algorithm
 
-![image](https://user-images.githubusercontent.com/43727688/222019337-f0f81a8f-8ef7-4b3f-8337-027b27b35282.png)
+```mermaid
+flowchart TD
+    A["Transaction baskets"] --> B["Partition-local Apriori"]
+    B --> C["Distinct candidate itemsets"]
+    C --> D["Global support counting"]
+    D --> E["Frequent itemsets"]
+```
 
+### Pass 1 — candidate generation
 
+1. Partition transaction baskets across Spark workers.
+2. Scale the global support threshold to each partition.
+3. Run Apriori locally, including join-and-prune candidate generation.
+4. Union and deduplicate candidates produced by every partition.
 
-![image](https://user-images.githubusercontent.com/43727688/222018837-103e2dbf-1843-44dd-9651-99194cfef49a.png)
-![image](https://user-images.githubusercontent.com/43727688/222018879-fcd36158-212b-46ab-8d02-e70e9a162463.png)
-![image](https://user-images.githubusercontent.com/43727688/222018898-e0e6f202-42d2-46aa-b73a-11c9f1b49a3a.png)
-![image](https://user-images.githubusercontent.com/43727688/222018952-c6715ec4-a803-4e91-944c-cbaaee6b69c1.png)
-![image](https://user-images.githubusercontent.com/43727688/222018976-edc1f884-9f21-4500-a403-26346b780933.png)
+### Pass 2 — global verification
+
+1. Count each candidate against the complete distributed basket set.
+2. Reduce counts by itemset.
+3. Retain itemsets that meet the global support threshold.
+
+## Implementations
+
+| Script | Dataset | Purpose |
+|---|---|---|
+| `task1.py` | small user–business baskets | validates both basket orientations and support behavior |
+| `task2.py` | Ta-Feng retail transactions | preprocesses date/customer baskets, filters small baskets, and mines frequent products |
+
+The repository includes small fixtures, the Ta-Feng input used for the exercise, and a sample candidate/frequent-itemset result.
+
+## Run locally
+
+Prerequisites:
+
+- Python 3
+- Apache Spark / PySpark
+
+```bash
+spark-submit task1.py
+spark-submit task2.py
+```
+
+Input paths, support thresholds, basket filters, and output paths are configured near the top of each script.
+
+## Engineering takeaways
+
+- local support scaling allows partitions to generate a complete candidate set;
+- Apriori subset pruning controls combinatorial growth;
+- the second distributed pass removes partition-local false positives;
+- deterministic ordering makes large result files easier to validate.
+
+> This repository is retained as a 2023 educational implementation. It favors algorithm transparency over production packaging.
+
