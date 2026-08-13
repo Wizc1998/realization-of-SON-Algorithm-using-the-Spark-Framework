@@ -1,62 +1,83 @@
 # Frequent Itemset Mining with SON and PySpark
 
+[![CI](https://github.com/Wizc1998/realization-of-SON-Algorithm-using-the-Spark-Framework/actions/workflows/ci.yml/badge.svg)](https://github.com/Wizc1998/realization-of-SON-Algorithm-using-the-Spark-Framework/actions/workflows/ci.yml)
 ![PySpark](https://img.shields.io/badge/PySpark-distributed%20mining-E25A1C?logo=apachespark&logoColor=white)
 ![Algorithm](https://img.shields.io/badge/Algorithm-SON%20%2B%20Apriori-6366f1)
 
-A from-scratch implementation of the two-pass SON algorithm for frequent-itemset mining on distributed transaction baskets. The project combines partition-local Apriori candidate generation with a global support-counting pass in PySpark.
+A deterministic, tested implementation of the two-pass SON algorithm for frequent-itemset mining. It combines partition-local Apriori candidate generation with global distributed support verification in PySpark.
+
+The repository began as a 2023 graduate algorithm project. The original `task1.py` and `task2.py` are preserved; the `son_miner` package is the reusable implementation with clearer contracts and automated tests.
 
 ## Algorithm
 
 ```mermaid
 flowchart TD
     A["Transaction baskets"] --> B["Partition-local Apriori"]
-    B --> C["Distinct candidate itemsets"]
-    C --> D["Global support counting"]
-    D --> E["Frequent itemsets"]
+    B --> C["Deduplicated candidates"]
+    C --> D["Broadcast candidate set"]
+    D --> E["Global distributed counting"]
+    E --> F["Frequent itemsets"]
 ```
 
 ### Pass 1 — candidate generation
 
-1. Partition transaction baskets across Spark workers.
-2. Scale the global support threshold to each partition.
-3. Run Apriori locally, including join-and-prune candidate generation.
-4. Union and deduplicate candidates produced by every partition.
+1. Group input pairs into transaction baskets.
+2. Scale global support to each Spark partition.
+3. Generate frequent singletons locally.
+4. Join frequent `(k-1)` itemsets and prune any candidate whose subset is absent.
+5. Union and deduplicate candidates from all partitions.
 
 ### Pass 2 — global verification
 
-1. Count each candidate against the complete distributed basket set.
-2. Reduce counts by itemset.
-3. Retain itemsets that meet the global support threshold.
+1. Broadcast the candidate set.
+2. Count candidate containment across all baskets.
+3. Reduce counts and retain itemsets meeting global support.
+4. Sort by itemset size and lexical order for reproducible output.
 
-## Implementations
-
-| Script | Dataset | Purpose |
-|---|---|---|
-| `task1.py` | small user–business baskets | validates both basket orientations and support behavior |
-| `task2.py` | Ta-Feng retail transactions | preprocesses date/customer baskets, filters small baskets, and mines frequent products |
-
-The repository includes small fixtures, the Ta-Feng input used for the exercise, and a sample candidate/frequent-itemset result.
-
-## Run locally
-
-Prerequisites:
-
-- Python 3
-- Apache Spark / PySpark
+## Run
 
 ```bash
-spark-submit task1.py
-spark-submit task2.py
+python -m pip install -r requirements.txt
+
+python -m son_miner.cli \
+  --master 'local[*]' \
+  --input data/small2.csv \
+  --output output/frequent-itemsets.json \
+  --support 4 \
+  --orientation left-baskets
 ```
 
-Input paths, support thresholds, basket filters, and output paths are configured near the top of each script.
+For the Ta-Feng dataset, use `--min-basket-size` to remove very small baskets before mining:
 
-## Engineering takeaways
+```bash
+python -m son_miner.cli \
+  --master 'local[*]' \
+  --input data/dt-customer_product.csv \
+  --output output/ta-feng-itemsets.json \
+  --support 50 \
+  --min-basket-size 21
+```
 
-- local support scaling allows partitions to generate a complete candidate set;
-- Apriori subset pruning controls combinatorial growth;
-- the second distributed pass removes partition-local false positives;
-- deterministic ordering makes large result files easier to validate.
+## Output contract
 
-> This repository is retained as a 2023 educational implementation. It favors algorithm transparency over production packaging.
+```json
+{
+  "candidates": [["item-a"], ["item-a", "item-b"]],
+  "frequent_itemsets": [["item-a"]],
+  "candidate_count": 2,
+  "frequent_itemset_count": 1
+}
+```
+
+## Engineering improvements
+
+- isolates dependency-free Apriori primitives from Spark orchestration;
+- uses canonical tuples and deterministic output ordering;
+- applies join-and-prune candidate generation instead of repeated unstructured set unions;
+- validates support, basket counts, orientation, and minimum basket size;
+- parses CSV partitions safely and removes the header only once;
+- broadcasts global candidates and explicitly releases the broadcast;
+- tests candidate pruning, support scaling, global counting, and output contracts in CI.
+
+The included Ta-Feng input is retained from the original educational exercise. For large production workloads, candidate memory, basket skew, and broadcast size should be monitored explicitly.
 
